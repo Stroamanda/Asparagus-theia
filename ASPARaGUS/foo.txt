@@ -1,0 +1,173 @@
+usage: brew_poison.py [-h] [--net NET]
+                      [--dataset {CIFAR10,CIFAR100,ImageNet,ImageNet1k,MNIST,TinyImageNet}]
+                      [--recipe {gradient-matching,gradient-matching-private,gradient-matching-mt,watermark,poison-frogs,metapoison,hidden-trigger,metapoison-v2,metapoison-v3,bullseye,patch,gradient-matching-hidden,convex-polytope}]
+                      [--threatmodel {single-class,third-party,random-subset}]
+                      [--scenario {from-scratch,transfer,finetuning}]
+                      [--poisonkey POISONKEY] [--modelkey MODELKEY]
+                      [--deterministic] [--eps EPS] [--budget BUDGET]
+                      [--targets TARGETS] [--patch_size PATCH_SIZE]
+                      [--name NAME] [--table_path TABLE_PATH]
+                      [--poison_path POISON_PATH] [--data_path DATA_PATH]
+                      [--modelsave_path MODELSAVE_PATH]
+                      [--mixing_method MIXING_METHOD]
+                      [--mixing_disable_correction]
+                      [--mixing_strength MIXING_STRENGTH]
+                      [--disable_adaptive_attack] [--defend_features_only]
+                      [--gradient_noise GRADIENT_NOISE]
+                      [--gradient_clip GRADIENT_CLIP]
+                      [--defense_type DEFENSE_TYPE]
+                      [--defense_strength DEFENSE_STRENGTH]
+                      [--defense_steps DEFENSE_STEPS]
+                      [--defense_targets DEFENSE_TARGETS]
+                      [--filter_defense {spectral_signatures,deepknn,activation_clustering}]
+                      [--padversarial PADVERSARIAL] [--pmix]
+                      [--attackoptim ATTACKOPTIM] [--attackiter ATTACKITER]
+                      [--init INIT] [--tau TAU] [--scheduling]
+                      [--target_criterion TARGET_CRITERION]
+                      [--restarts RESTARTS] [--load_patch LOAD_PATCH]
+                      [--pbatch PBATCH] [--pshuffle] [--paugment]
+                      [--data_aug DATA_AUG] [--full_data]
+                      [--ensemble ENSEMBLE]
+                      [--stagger {firstn,full,inbetween}] [--step]
+                      [--max_epoch MAX_EPOCH] [--ablation ABLATION]
+                      [--loss LOSS] [--centreg CENTREG] [--normreg NORMREG]
+                      [--repel REPEL] [--nadapt NADAPT] [--clean_grad]
+                      [--vruns VRUNS] [--vnet VNET] [--retrain_from_init]
+                      [--skip_clean_training] [--pretrained_model]
+                      [--pretrain_dataset {CIFAR10,CIFAR100,ImageNet,ImageNet1k,MNIST,TinyImageNet}]
+                      [--optimization OPTIMIZATION] [--epochs EPOCHS]
+                      [--lr LR] [--noaugment] [--lmdb_path LMDB_PATH]
+                      [--cache_dataset] [--benchmark BENCHMARK]
+                      [--benchmark_idx BENCHMARK_IDX] [--dryrun] [--save SAVE]
+                      [--local_rank LOCAL_RANK]
+                      [--save_weights {timed,untimed}] [--only_clean_training]
+                      [--load_model LOAD_MODEL] [--save_epoch SAVE_EPOCH]
+                      [--start_from START_FROM]
+
+Construct poisoned training data for the given network and dataset
+
+options:
+  -h, --help            show this help message and exit
+  --net NET
+  --dataset {CIFAR10,CIFAR100,ImageNet,ImageNet1k,MNIST,TinyImageNet}
+  --recipe {gradient-matching,gradient-matching-private,gradient-matching-mt,watermark,poison-frogs,metapoison,hidden-trigger,metapoison-v2,metapoison-v3,bullseye,patch,gradient-matching-hidden,convex-polytope}
+  --threatmodel {single-class,third-party,random-subset}
+  --scenario {from-scratch,transfer,finetuning}
+  --poisonkey POISONKEY
+                        Initialize poison setup with this key.
+  --modelkey MODELKEY   Initialize the model with this key.
+  --deterministic       Disable CUDNN non-determinism.
+  --eps EPS             Epsilon bound of the attack in a ||.||_p norm. p=Inf
+                        for all recipes except for "patch".
+  --budget BUDGET       Fraction of training data that is poisoned
+  --targets TARGETS     Number of targets
+  --patch_size PATCH_SIZE
+                        Size of patch to be added to test data (htbd attack)
+  --name NAME           Name tag for the result table and possibly for export
+                        folders.
+  --table_path TABLE_PATH
+  --poison_path POISON_PATH
+  --data_path DATA_PATH
+  --modelsave_path MODELSAVE_PATH
+  --mixing_method MIXING_METHOD
+                        Which mixing data augmentation to use.
+  --mixing_disable_correction
+                        Disable correcting the loss term appropriately after
+                        data mixing.
+  --mixing_strength MIXING_STRENGTH
+                        How strong is the mixing.
+  --disable_adaptive_attack
+                        Do not use a defended model as input for poisoning.
+                        [Defend only in poison validation]
+  --defend_features_only
+                        Only defend during the initial pretraining before
+                        poisoning. [Defend only in pretraining]
+  --gradient_noise GRADIENT_NOISE
+                        Add custom gradient noise during training.
+  --gradient_clip GRADIENT_CLIP
+                        Add custom gradient clip during training.
+  --defense_type DEFENSE_TYPE
+                        Add custom novel defenses.
+  --defense_strength DEFENSE_STRENGTH
+                        Add custom strength to novel defenses.
+  --defense_steps DEFENSE_STEPS
+                        Override default number of adversarial steps taken by
+                        the defense.
+  --defense_targets DEFENSE_TARGETS
+                        Different choices for target selection. Options:
+                        shuffle/sep-half/sep-1/sep-10
+  --filter_defense {spectral_signatures,deepknn,activation_clustering}
+                        Which filtering defense to use.
+  --padversarial PADVERSARIAL
+                        Use adversarial steps during poison brewing.
+  --pmix                Use mixing during poison brewing [Uses the mixing
+                        specified in mixing_type].
+  --attackoptim ATTACKOPTIM
+  --attackiter ATTACKITER
+  --init INIT
+  --tau TAU
+  --scheduling          Disable step size decay.
+  --target_criterion TARGET_CRITERION
+                        Loss criterion for target loss
+  --restarts RESTARTS   How often to restart the attack.
+  --load_patch LOAD_PATCH
+                        Path to load image for patch attack
+  --pbatch PBATCH       Poison batch size during optimization
+  --pshuffle            Shuffle poison batch during optimization
+  --paugment            Do not augment poison batch during optimization
+  --data_aug DATA_AUG   Mode of diff. data augmentation.
+  --full_data           Use full train data (instead of just the poison
+                        images)
+  --ensemble ENSEMBLE   Ensemble of networks to brew the poison on
+  --stagger {firstn,full,inbetween}
+                        Stagger the network ensemble if it exists
+  --step                Optimize the model for one epoch.
+  --max_epoch MAX_EPOCH
+                        Train only up to this epoch before poisoning.
+  --ablation ABLATION   What percent of data (including poisons) to use for
+                        validation
+  --loss LOSS
+  --centreg CENTREG
+  --normreg NORMREG
+  --repel REPEL
+  --nadapt NADAPT       Meta unrolling steps
+  --clean_grad          Compute the first-order poison gradient.
+  --vruns VRUNS         How often to re-initialize and check target after
+                        retraining
+  --vnet VNET           Evaluate poison on this victim model. Defaults to
+                        --net
+  --retrain_from_init   Additionally evaluate by retraining on the same model
+                        initialization.
+  --skip_clean_training
+                        Skip clean training. This is only suggested for
+                        attacks that do not depend on a clean model.
+  --pretrained_model    Load pretrained models from torchvision, if possible
+                        [only valid for ImageNet].
+  --pretrain_dataset {CIFAR10,CIFAR100,ImageNet,ImageNet1k,MNIST,TinyImageNet}
+  --optimization OPTIMIZATION
+                        Optimization Strategy
+  --epochs EPOCHS       Override default epochs of --optimization strategy
+  --lr LR               Override default learning rate of --optimization
+                        strategy
+  --noaugment           Do not use data augmentation during training.
+  --lmdb_path LMDB_PATH
+  --cache_dataset       Cache the entire thing :>
+  --benchmark BENCHMARK
+                        Path to benchmarking setup (pickle file)
+  --benchmark_idx BENCHMARK_IDX
+                        Index of benchmark test
+  --dryrun
+  --save SAVE           Export poisons into a given format. Options are
+                        full/limited/automl/numpy.
+  --local_rank LOCAL_RANK
+                        Distributed rank. This is an INTERNAL ARGUMENT! Only
+                        the launch utility should set this argument!
+  --save_weights {timed,untimed}
+  --only_clean_training
+  --load_model LOAD_MODEL
+                        Load an already trained model from a .pth file to
+                        continue training on
+  --save_epoch SAVE_EPOCH
+                        Epoch to save the model at
+  --start_from START_FROM
+                        The epoch to resume training at
